@@ -28,13 +28,22 @@ class NetworkClient:
         self.snapshot = None       # latest STATE message, or None
         self.last_error = None
         self.connected = False
+        self.connect_error = None  # set if the initial connect() failed
 
         # Optional callback fired whenever a new snapshot arrives, so a UI
         # can react instead of polling. Signature: callback(snapshot_dict).
         self.on_update = None
 
-    def connect(self):
-        self.sock.connect((self.host, self.port))
+    def connect(self, timeout: float = 6.0):
+        """Open the socket. Raises OSError if the server can't be reached
+        (refused, unreachable, or no answer within `timeout` seconds)."""
+        try:
+            self.sock.settimeout(timeout)
+            self.sock.connect((self.host, self.port))
+            self.sock.settimeout(None)   # back to blocking for recv
+        except OSError as e:
+            self.connect_error = str(e)
+            raise
         self.connected = True
         threading.Thread(target=self._recv_loop, daemon=True).start()
 

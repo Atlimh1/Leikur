@@ -90,8 +90,23 @@ class GameWindow:
         snap = self.client.get_snapshot()
         self.screen.fill(BG)
 
+        # Connection problems take over the whole window with a clear message.
+        if self.client.connect_error:
+            self._center_text("Can't reach the server", self.font_big, (235, 130, 130), dy=-30)
+            self._center_text(f"{self.client.host}:{self.client.port}", self.font, TEXT_DIM, dy=6)
+            self._center_text("Is someone running  python server.py  there?",
+                              self.font_small, TEXT_DIM, dy=40)
+            pygame.display.flip()
+            return
+
         if snap is None:
             self._center_text("Connecting…", self.font_big, TEXT)
+            pygame.display.flip()
+            return
+
+        if not self.client.connected:
+            # We had a game, then lost the link.
+            self._center_text("Lost connection to server", self.font_big, (235, 130, 130))
             pygame.display.flip()
             return
 
@@ -113,8 +128,11 @@ class GameWindow:
         status = snap["status"]
 
         if status == "waiting":
-            self._text("Waiting for a second player…", self.font, TEXT,
-                       center=(self.width // 2, BANNER_H // 2))
+            self._text("Waiting for opponent to join…", self.font, TEXT,
+                       center=(self.width // 2, BANNER_H // 2 - 10))
+            self._text("(the game starts when 2 players are connected)",
+                       self.font_small, TEXT_DIM,
+                       center=(self.width // 2, BANNER_H // 2 + 18))
             return
 
         cur = snap["current_player"]
@@ -277,8 +295,8 @@ def main():
     try:
         client.connect()
     except OSError as e:
+        # Don't just exit -- open the window so the player sees *why*.
         print(f"Could not connect to {host}:{port} -- is the server running? ({e})")
-        return
 
     GameWindow(client).run()
 
