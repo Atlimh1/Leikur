@@ -21,39 +21,48 @@ game/protocol.py   shared wire format — newline-delimited JSON over TCP
 game/state.py      pure game logic (no networking, fully unit-testable)
 server.py          TCP server: one thread per client, authoritative state
 netclient.py       client network layer — UI-agnostic (no terminal/pygame code)
-play.py            terminal client to play & test right now
+gui.py             graphical client (pygame) — clickable grid, colors, scores
+play.py            terminal client (handy for quick testing)
 ```
 
-`netclient.py` is deliberately UI-free, so the future pygame client will reuse
-the exact same network layer as the terminal client.
+`netclient.py` is deliberately UI-free, so **both** clients — terminal and
+pygame — reuse the exact same network layer.
+
+## Setup
+
+```bash
+pip install -r requirements.txt   # installs pygame-ce
+```
 
 ## How to run
 
-Open three terminals.
+Open two (or three) terminals.
 
-**1. Start the server:**
+**1. Start the server** (one player hosts):
 ```bash
 python3 server.py
 ```
 
-**2. Player one:**
+**2. Each player joins with the graphical client:**
 ```bash
-python3 play.py
+python3 gui.py                 # local test (defaults to 127.0.0.1)
+python3 gui.py 100.x.y.z 5555  # connect to the host's IP
 ```
 
-**3. Player two:**
-```bash
-python3 play.py
-```
+A window opens with a 5×5 grid. On your turn, **click an empty cell** to claim
+it. Colors and the turn banner show whose move it is; the footer shows scores.
 
-The game starts automatically once the second player connects. On your turn,
-type a move as two numbers — e.g. `2 3` — and press Enter.
+Prefer the terminal? `python3 play.py [host] [port]` still works.
 
-Playing across machines on the same network? Pass the server's IP:
-`python3 play.py 192.168.1.50 5555`.
+### Playing across the internet
+
+A home PC isn't reachable from the internet by default (NAT). Easiest fix:
+install [Tailscale](https://tailscale.com/download) on both machines, log into
+the same account, and the host shares their `tailscale ip -4` address — the
+other player connects with `python3 gui.py <that-ip> 5555`.
 
 ## Next steps
 
-- [ ] Swap the terminal frontend for a pygame window (reusing `netclient.py`)
-- [ ] Lobby / rematch flow
+- [ ] Lobby / rematch flow (play again without restarting)
 - [ ] Reconnect handling and player-disconnect mid-game
+- [ ] Sound effects and move animations
