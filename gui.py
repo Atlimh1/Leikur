@@ -251,7 +251,7 @@ class App:
         elif my_turn:
             label = "Your turn"
         else:
-            opp = snap["names"].get(cur, "Opponent")
+            opp = snap.get("names", {}).get(cur, "Opponent")
             label = f"{opp}'s turn"
         self._text(label, self.font_big, TEXT, midleft=(PAD + 22, BANNER_H // 2))
 
@@ -312,7 +312,7 @@ class App:
         x, cy = PAD, fy + FOOTER_H // 2
         for pid in snap["players"]:
             pygame.draw.circle(self.screen, player_color(snap, pid), (x + 8, cy), 9)
-            name = snap["names"].get(pid, "?")
+            name = snap.get("names", {}).get(pid, "Player")
             if pid == self.client.player_id:
                 name += " (you)"
             self._text(f"{name}: {counts[pid]}", self.font_small, TEXT, midleft=(x + 24, cy))
@@ -328,7 +328,7 @@ class App:
         elif winner == self.client.player_id:
             msg, col = "You win! 🎉", player_color(snap, winner)
         else:
-            msg, col = f"{snap['names'].get(winner, 'Opponent')} wins", player_color(snap, winner)
+            msg, col = f"{snap.get('names', {}).get(winner, 'Opponent')} wins", player_color(snap, winner)
         self._text(msg, self.font_big, col, center=(self.width // 2, self.height // 2 - 40))
         back = pygame.Rect(self.width // 2 - 110, self.height // 2 + 4, 220, 52)
         self._button(back, "Back to menu", self.client.leave_game, primary=True)
