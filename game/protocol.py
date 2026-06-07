@@ -11,13 +11,17 @@ import json
 
 
 # --- Message types: client -> server ---
-JOIN = "join"      # {type, name}            -- ask to join the game
-MOVE = "move"      # {type, x, y}            -- claim a cell on your turn
+SET_NAME = "set_name"        # {type, name}        -- set your display name
+CREATE_GAME = "create_game"  # {type}              -- open a new game, you host it
+JOIN_GAME = "join_game"      # {type, game_id}     -- join someone's open game
+LEAVE_GAME = "leave_game"    # {type}              -- go back to the menu/lobby
+MOVE = "move"                # {type, x, y}        -- claim a cell on your turn
 
 # --- Message types: server -> client ---
-WELCOME = "welcome"  # {type, player_id, symbol}        -- sent once on connect
-STATE = "state"      # {type, ...full game snapshot}     -- broadcast after changes
-ERROR = "error"      # {type, message}                  -- something went wrong
+WELCOME = "welcome"  # {type, player_id, name}           -- sent once on connect
+LOBBY = "lobby"      # {type, games:[...], your_name}    -- you're in the menu
+STATE = "state"      # {type, ...game snapshot..., names} -- you're in a game
+ERROR = "error"      # {type, message}                   -- something went wrong
 
 
 def encode(message: dict) -> bytes:

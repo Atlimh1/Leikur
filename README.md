@@ -19,10 +19,10 @@ That's what keeps a multiplayer game consistent and cheat-resistant.
 ```
 game/protocol.py   shared wire format — newline-delimited JSON over TCP
 game/state.py      pure game logic (no networking, fully unit-testable)
-server.py          TCP server: one thread per client, authoritative state
+server.py          TCP server: lobby + many game rooms, authoritative state
 netclient.py       client network layer — UI-agnostic (no terminal/pygame code)
-gui.py             graphical client (pygame) — clickable grid, colors, scores
-play.py            terminal client (handy for quick testing)
+gui.py             graphical client (pygame) — main menu + clickable board
+play.py            terminal client (auto-matches, handy for quick testing)
 ```
 
 `netclient.py` is deliberately UI-free, so **both** clients — terminal and
@@ -49,10 +49,17 @@ python3 gui.py                 # local test (defaults to 127.0.0.1)
 python3 gui.py 100.x.y.z 5555  # connect to the host's IP
 ```
 
-A window opens with a 5×5 grid. On your turn, **click an empty cell** to claim
-it. Colors and the turn banner show whose move it is; the footer shows scores.
+A window opens with the **main menu**. Type your name, then either:
+- **Create New Game** — opens a room and waits; your game appears in everyone
+  else's menu as an open game.
+- **Join** an open game from the list — once you join, both players drop into
+  the board and it's the host's turn.
 
-Prefer the terminal? `python3 play.py [host] [port]` still works.
+On your turn, **click an empty cell** to claim it. Colors and the turn banner
+show whose move it is; the footer shows the score with player names. After the
+game, **Back to menu** returns both of you to the lobby for another round.
+
+Prefer the terminal? `python3 play.py [host] [port]` auto-matches two players.
 
 ### Playing across the internet
 
@@ -63,6 +70,7 @@ other player connects with `python3 gui.py <that-ip> 5555`.
 
 ## Next steps
 
-- [ ] Lobby / rematch flow (play again without restarting)
-- [ ] Reconnect handling and player-disconnect mid-game
+- [ ] Auto-refresh / "Rematch" button that re-hosts against the same opponent
+- [ ] Reconnect handling if a player briefly drops
 - [ ] Sound effects and move animations
+- [ ] Richer game (bigger board, special tiles, more than 2 players)

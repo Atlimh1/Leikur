@@ -24,8 +24,10 @@ class NetworkClient:
         # while the UI thread reads it.
         self._lock = threading.Lock()
         self.player_id = None
-        self.symbol = None
-        self.snapshot = None       # latest STATE message, or None
+        self.name = None
+        self.snapshot = None       # latest STATE message (in-game), or None
+        self.lobby = None          # latest list of open games (in-menu)
+        self.mode = None           # "menu" or "game" -- which screen to show
         self.last_error = None
         self.connected = False
         self.connect_error = None  # set if the initial connect() failed
@@ -67,25 +69,53 @@ class NetworkClient:
         with self._lock:
             if mtype == protocol.WELCOME:
                 self.player_id = message["player_id"]
-                self.symbol = message["symbol"]
+                self.name = message.get("name")
+            elif mtype == protocol.LOBBY:
+                self.lobby = message.get("games", [])
+                if message.get("your_name"):
+                    self.name = message["your_name"]
+                self.mode = "menu"
+                self.snapshot = None
             elif mtype == protocol.STATE:
                 self.snapshot = message
+                self.mode = "game"
             elif mtype == protocol.ERROR:
                 self.last_error = message.get("message")
-        if self.on_update and mtype == protocol.STATE:
+        if self.on_update and mtype in (protocol.STATE, protocol.LOBBY):
             self.on_update(message)
 
     # --- actions the UI calls ---
 
-    def send_move(self, x: int, y: int):
+    def _send(self, message: dict):
         try:
-            self.sock.sendall(protocol.encode({"type": protocol.MOVE, "x": x, "y": y}))
+            self.sock.sendall(protocol.encode(message))
         except OSError:
             self.connected = False
+
+    def set_name(self, name: str):
+        self.name = name
+        self._send({"type": protocol.SET_NAME, "name": name})
+
+    def create_game(self):
+        self._send({"type": protocol.CREATE_GAME})
+
+    def join_game(self, game_id: int):
+        self._send({"type": protocol.JOIN_GAME, "game_id": game_id})
+
+    def leave_game(self):
+        self.last_error = None
+        self._send({"type": protocol.LEAVE_GAME})
+
+    def send_move(self, x: int, y: int):
+        self._send({"type": protocol.MOVE, "x": x, "y": y})
 
     def get_snapshot(self):
         with self._lock:
             return self.snapshot
+
+    def get_lobby(self):
+        with self._lock:
+            return self.lobby
 
     def close(self):
         try:
